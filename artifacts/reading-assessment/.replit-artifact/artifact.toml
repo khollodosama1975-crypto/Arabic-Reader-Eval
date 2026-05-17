@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Arabic Reading Assessment"
+version = "1.0.0"
+id = "artifacts/reading-assessment"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 21301
+
+[services.development]
+run = "pnpm --filter @workspace/reading-assessment run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/reading-assessment", "run", "build" ]
+publicDir = "artifacts/reading-assessment/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "21301"
+BASE_PATH = "/"
