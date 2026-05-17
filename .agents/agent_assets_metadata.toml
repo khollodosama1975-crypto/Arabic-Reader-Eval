@@ -6,3 +6,9 @@ id = "axwnJ39Z9d6wCLXKbIDK3"
 uri = "file://reading-assessment.zip"
 type = "unspecified"
 title = "Arabic Reading Assessment — Project Files"
+
+[[outputs]]
+id = "of2iYfVK7GHWSciP896l_"
+uri = "file://reading-assessment-v2.zip"
+type = "unspecified"
+title = "Arabic Reading Assessment — Complete Project Files"
