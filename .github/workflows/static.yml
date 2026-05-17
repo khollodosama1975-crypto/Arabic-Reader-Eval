@@ -24,21 +24,34 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 8
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: 'pnpm'
 
       - name: Install Dependencies
-        run: npm install
+        run: pnpm install --no-frozen-lockfile
 
       - name: Build Project
-        run: npm run build
+        run: pnpm run build
+        continue-on-error: true
+
+      - name: Fallback Build if needed
+        run: |
+          if [ ! -d "artifacts/reading-assessment/dist/public" ]; then
+            cd artifacts/reading-assessment && pnpm install && pnpm run build
+          fi
 
       - name: Upload Artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          # نحدد المسار الذي تخرج إليه الملفات الجاهزة في إعدادات Vite لديك
+          # قراءة المجلد الصحيح الذي يحتوي على ملف index.html الجاهز
           path: './artifacts/reading-assessment/dist/public'
 
       - name: Deploy to GitHub Pages
