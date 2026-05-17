@@ -1,138 +1,171 @@
+import type { LeaderboardEntry } from "@/App";
+import { sortLeaderboard } from "@/App";
+
 interface ResultsScreenProps {
   studentName: string;
   elapsed: number;
   mistakes: number;
+  leaderboard: LeaderboardEntry[];
+  currentEntryId: string;
   onReset: () => void;
+  onClearLeaderboard: () => void;
 }
 
-function getRank(mistakes: number): { label: string; description: string; color: string; bg: string; icon: string } {
-  if (mistakes <= 2) {
-    return {
-      label: "المركز الأول",
-      description: "ممتاز — أداء رائع جداً",
-      color: "hsl(142 71% 35%)",
-      bg: "hsl(142 71% 45% / 0.10)",
-      icon: "🥇",
-    };
-  } else if (mistakes <= 5) {
-    return {
-      label: "المركز الثاني",
-      description: "جيد جداً — أداء جيد",
-      color: "hsl(38 95% 40%)",
-      bg: "hsl(38 95% 55% / 0.10)",
-      icon: "🥈",
-    };
-  } else {
-    return {
-      label: "المركز الثالث",
-      description: "مقبول — يحتاج إلى تدريب إضافي",
-      color: "hsl(0 84% 50%)",
-      bg: "hsl(0 84% 60% / 0.08)",
-      icon: "🥉",
-    };
-  }
+function getRankBadge(rank: number) {
+  if (rank === 1) return { emoji: "🥇", bg: "hsl(45 100% 51% / 0.15)", border: "hsl(45 100% 51%)", text: "hsl(36 100% 30%)" };
+  if (rank === 2) return { emoji: "🥈", bg: "hsl(220 10% 75% / 0.20)", border: "hsl(220 10% 65%)", text: "hsl(220 10% 35%)" };
+  if (rank === 3) return { emoji: "🥉", bg: "hsl(25 80% 55% / 0.15)", border: "hsl(25 80% 55%)", text: "hsl(25 80% 30%)" };
+  return { emoji: null, bg: "transparent", border: "hsl(214 32% 88%)", text: "hsl(222 47% 20%)" };
 }
 
-export default function ResultsScreen({ studentName, elapsed, mistakes, onReset }: ResultsScreenProps) {
-  const rank = getRank(mistakes);
-  const finishedEarly = elapsed < 60;
+export default function ResultsScreen({
+  studentName,
+  elapsed,
+  mistakes,
+  leaderboard,
+  currentEntryId,
+  onReset,
+  onClearLeaderboard,
+}: ResultsScreenProps) {
+  const sorted = sortLeaderboard(leaderboard);
+  const myRank = sorted.findIndex((e) => e.id === currentEntryId) + 1;
+  const badge = getRankBadge(myRank);
 
   return (
     <div
-      className="min-h-screen flex items-center justify-center p-4"
+      className="min-h-screen p-4 pb-10"
       style={{ background: "linear-gradient(135deg, hsl(221 83% 96%) 0%, hsl(210 40% 97%) 50%, hsl(221 83% 93%) 100%)" }}
       dir="rtl"
     >
-      <div className="w-full max-w-md">
+      <div className="max-w-lg mx-auto">
         {/* Title */}
-        <div className="text-center mb-6">
-          <h1 className="text-3xl font-bold" style={{ color: "hsl(222 47% 15%)" }}>نتيجة الاختبار</h1>
-          <p className="text-base mt-1" style={{ color: "hsl(215 20% 55%)" }}>{studentName}</p>
+        <div className="text-center mb-5 pt-2">
+          <h1 className="text-2xl font-bold" style={{ color: "hsl(222 47% 15%)" }}>نتيجة الاختبار</h1>
         </div>
 
-        {/* Rank Card */}
+        {/* My result card */}
         <div
-          className="rounded-2xl p-7 mb-4 text-center shadow-lg"
-          style={{ background: rank.bg, border: `2px solid ${rank.color}30` }}
+          className="rounded-2xl p-5 mb-4 shadow-md"
+          style={{ background: "white", border: `2px solid ${badge.border}`, }}
         >
-          <div className="text-5xl mb-3">{rank.icon}</div>
-          <h2 className="text-3xl font-black mb-1" style={{ color: rank.color }}>{rank.label}</h2>
-          <p className="text-base font-semibold" style={{ color: rank.color }}>{rank.description}</p>
-        </div>
-
-        {/* Stats */}
-        <div className="grid grid-cols-2 gap-4 mb-6">
-          {/* Time */}
-          <div
-            className="rounded-2xl p-5 text-center shadow-sm"
-            style={{ background: "white", border: "1px solid hsl(214 32% 88%)" }}
-          >
-            <div className="flex items-center justify-center mb-2">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="hsl(221 83% 53%)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10"/>
-                <polyline points="12 6 12 12 16 14"/>
-              </svg>
-            </div>
-            <p className="text-xs font-medium mb-1" style={{ color: "hsl(215 20% 55%)" }}>
-              {finishedEarly ? "أنهى القراءة في" : "الوقت المستغرق"}
-            </p>
-            <p className="text-2xl font-black" style={{ color: "hsl(221 83% 53%)" }}>
-              {elapsed}
-            </p>
-            <p className="text-xs font-medium" style={{ color: "hsl(215 20% 55%)" }}>ثانية</p>
-            {finishedEarly && (
-              <p className="text-xs mt-1.5 font-semibold" style={{ color: "hsl(142 71% 40%)" }}>
-                أنهى قبل انتهاء الوقت
-              </p>
-            )}
-          </div>
-
-          {/* Mistakes */}
-          <div
-            className="rounded-2xl p-5 text-center shadow-sm"
-            style={{ background: "white", border: "1px solid hsl(214 32% 88%)" }}
-          >
-            <div className="flex items-center justify-center mb-2">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="hsl(0 84% 55%)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10"/>
-                <line x1="15" y1="9" x2="9" y2="15"/>
-                <line x1="9" y1="9" x2="15" y2="15"/>
-              </svg>
-            </div>
-            <p className="text-xs font-medium mb-1" style={{ color: "hsl(215 20% 55%)" }}>عدد الأخطاء</p>
-            <p
-              className="text-2xl font-black"
-              style={{ color: mistakes === 0 ? "hsl(142 71% 40%)" : "hsl(0 84% 50%)" }}
+          <div className="flex items-center gap-3 mb-4">
+            {/* Rank number */}
+            <div
+              className="flex-shrink-0 flex items-center justify-center rounded-full w-14 h-14 text-2xl font-black"
+              style={{ background: badge.bg, border: `2px solid ${badge.border}`, color: badge.text }}
             >
-              {mistakes}
-            </p>
-            <p className="text-xs font-medium" style={{ color: "hsl(215 20% 55%)" }}>
-              {mistakes === 0 ? "بدون أخطاء!" : mistakes === 1 ? "خطأ واحد" : `خطأ`}
-            </p>
+              {badge.emoji ?? `#${myRank}`}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-medium mb-0.5" style={{ color: "hsl(215 20% 55%)" }}>المركز الحالي</p>
+              <p className="text-2xl font-black leading-none" style={{ color: badge.text }}>
+                {myRank === 1 ? "المركز الأول 🎉" : myRank === 2 ? "المركز الثاني" : myRank === 3 ? "المركز الثالث" : `المركز #${myRank}`}
+              </p>
+              <p className="text-sm font-semibold mt-0.5 truncate" style={{ color: "hsl(222 47% 25%)" }}>{studentName}</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="rounded-xl p-3 text-center" style={{ background: "hsl(221 83% 53% / 0.07)" }}>
+              <p className="text-xs font-medium mb-1" style={{ color: "hsl(221 83% 45%)" }}>الوقت المستغرق</p>
+              <p className="text-2xl font-black" style={{ color: "hsl(221 83% 53%)" }}>{elapsed}</p>
+              <p className="text-xs" style={{ color: "hsl(215 20% 55%)" }}>ثانية</p>
+            </div>
+            <div className="rounded-xl p-3 text-center" style={{ background: mistakes === 0 ? "hsl(142 71% 45% / 0.08)" : "hsl(0 84% 60% / 0.07)" }}>
+              <p className="text-xs font-medium mb-1" style={{ color: mistakes === 0 ? "hsl(142 71% 35%)" : "hsl(0 84% 45%)" }}>عدد الأخطاء</p>
+              <p className="text-2xl font-black" style={{ color: mistakes === 0 ? "hsl(142 71% 40%)" : "hsl(0 84% 50%)" }}>{mistakes}</p>
+              <p className="text-xs" style={{ color: "hsl(215 20% 55%)" }}>{mistakes === 0 ? "بدون أخطاء!" : "خطأ"}</p>
+            </div>
           </div>
         </div>
 
-        {/* Rank legend */}
+        {/* Leaderboard */}
         <div
-          className="rounded-2xl p-4 mb-6 shadow-sm"
+          className="rounded-2xl shadow-md overflow-hidden mb-5"
           style={{ background: "white", border: "1px solid hsl(214 32% 88%)" }}
         >
-          <p className="text-sm font-bold mb-3 text-center" style={{ color: "hsl(222 47% 20%)" }}>معيار التقييم</p>
-          <div className="space-y-2">
-            <div className="flex items-center justify-between text-sm">
-              <span className="font-semibold" style={{ color: "hsl(142 71% 35%)" }}>المركز الأول</span>
-              <span style={{ color: "hsl(215 20% 50%)" }}>من 0 إلى 2 خطأ</span>
-            </div>
-            <div className="h-px" style={{ background: "hsl(214 32% 90%)" }} />
-            <div className="flex items-center justify-between text-sm">
-              <span className="font-semibold" style={{ color: "hsl(38 95% 40%)" }}>المركز الثاني</span>
-              <span style={{ color: "hsl(215 20% 50%)" }}>من 3 إلى 5 أخطاء</span>
-            </div>
-            <div className="h-px" style={{ background: "hsl(214 32% 90%)" }} />
-            <div className="flex items-center justify-between text-sm">
-              <span className="font-semibold" style={{ color: "hsl(0 84% 50%)" }}>المركز الثالث</span>
-              <span style={{ color: "hsl(215 20% 50%)" }}>أكثر من 5 أخطاء</span>
-            </div>
+          {/* Header */}
+          <div className="px-4 py-3 flex items-center gap-2" style={{ background: "hsl(221 83% 53%)" }}>
+            <span className="text-white text-base">🏆</span>
+            <h2 className="text-sm font-bold text-white">لوحة المتصدرين</h2>
+            <span className="text-white/70 text-xs mr-auto">{sorted.length} طالب</span>
+          </div>
+
+          {/* Column headers */}
+          <div
+            className="grid px-4 py-2 text-xs font-bold"
+            style={{ gridTemplateColumns: "2rem 1fr 4rem 4rem", color: "hsl(215 20% 50%)", background: "hsl(210 40% 97%)", borderBottom: "1px solid hsl(214 32% 90%)" }}
+          >
+            <span className="text-center">#</span>
+            <span>الاسم</span>
+            <span className="text-center">الأخطاء</span>
+            <span className="text-center">الوقت</span>
+          </div>
+
+          {/* Rows */}
+          <div className="divide-y" style={{ borderColor: "hsl(214 32% 91%)" }}>
+            {sorted.length === 0 && (
+              <div className="py-6 text-center text-sm" style={{ color: "hsl(215 20% 55%)" }}>
+                لا توجد نتائج بعد
+              </div>
+            )}
+            {sorted.map((entry, idx) => {
+              const rank = idx + 1;
+              const isMe = entry.id === currentEntryId;
+              const rb = getRankBadge(rank);
+              return (
+                <div
+                  key={entry.id}
+                  className="grid items-center px-4 py-2.5 gap-1"
+                  style={{
+                    gridTemplateColumns: "2rem 1fr 4rem 4rem",
+                    background: isMe ? "hsl(221 83% 53% / 0.07)" : "transparent",
+                    borderRight: isMe ? "3px solid hsl(221 83% 53%)" : "3px solid transparent",
+                  }}
+                >
+                  {/* Rank */}
+                  <div className="flex items-center justify-center">
+                    {rank <= 3 ? (
+                      <span className="text-lg leading-none">{rb.emoji}</span>
+                    ) : (
+                      <span className="text-sm font-bold" style={{ color: "hsl(215 20% 50%)" }}>#{rank}</span>
+                    )}
+                  </div>
+
+                  {/* Name */}
+                  <div className="min-w-0">
+                    <p
+                      className="text-sm font-semibold truncate"
+                      style={{ color: isMe ? "hsl(221 83% 45%)" : "hsl(222 47% 15%)" }}
+                    >
+                      {entry.name}
+                      {isMe && <span className="text-xs font-normal mr-1" style={{ color: "hsl(221 83% 55%)" }}>(أنت)</span>}
+                    </p>
+                    <p className="text-xs" style={{ color: "hsl(215 20% 60%)" }}>{entry.date}</p>
+                  </div>
+
+                  {/* Mistakes */}
+                  <div className="text-center">
+                    <span
+                      className="inline-block text-sm font-bold px-2 py-0.5 rounded-full"
+                      style={{
+                        background: entry.mistakes === 0 ? "hsl(142 71% 45% / 0.12)" : "hsl(0 84% 60% / 0.10)",
+                        color: entry.mistakes === 0 ? "hsl(142 71% 35%)" : "hsl(0 84% 45%)",
+                      }}
+                    >
+                      {entry.mistakes}
+                    </span>
+                  </div>
+
+                  {/* Time */}
+                  <div className="text-center">
+                    <span className="text-sm font-semibold" style={{ color: "hsl(221 83% 50%)" }}>
+                      {entry.elapsed}ث
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
 
@@ -140,16 +173,21 @@ export default function ResultsScreen({ studentName, elapsed, mistakes, onReset 
         <div className="flex gap-3">
           <button
             onClick={onReset}
-            className="flex-1 py-3.5 rounded-xl text-base font-bold transition-all duration-150 active:scale-95"
-            style={{
-              background: "hsl(221 83% 53%)",
-              color: "white",
-              boxShadow: "0 4px 14px hsl(221 83% 53% / 0.30)",
-            }}
+            className="flex-1 py-3.5 rounded-xl text-sm font-bold transition-all duration-150 active:scale-95"
+            style={{ background: "hsl(221 83% 53%)", color: "white", boxShadow: "0 4px 14px hsl(221 83% 53% / 0.30)" }}
             onMouseEnter={(e) => (e.currentTarget.style.background = "hsl(221 83% 46%)")}
             onMouseLeave={(e) => (e.currentTarget.style.background = "hsl(221 83% 53%)")}
           >
-            اختبار طالب جديد
+            طالب جديد
+          </button>
+          <button
+            onClick={onClearLeaderboard}
+            className="py-3.5 px-5 rounded-xl text-sm font-bold transition-all duration-150 active:scale-95"
+            style={{ background: "hsl(0 84% 60% / 0.10)", color: "hsl(0 84% 45%)", border: "1px solid hsl(0 84% 60% / 0.25)" }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "hsl(0 84% 60% / 0.18)")}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "hsl(0 84% 60% / 0.10)")}
+          >
+            مسح النتائج
           </button>
         </div>
       </div>
